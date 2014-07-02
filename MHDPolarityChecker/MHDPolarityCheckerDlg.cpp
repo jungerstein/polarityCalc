@@ -16,7 +16,7 @@ enum waveType {fast, slow, aw};
 
 double factorTable[8];
 double vgPara, vgPerp, vp_Gross;
-waveType typ; 
+waveType typ = aw; 
 
 // CAboutDlg dialog used for App About
 
@@ -120,6 +120,7 @@ CMHDPolarityCheckerDlg::CMHDPolarityCheckerDlg(CWnd* pParent /*=NULL*/)
 	, vg(_T(""))
 {
 	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
+	
 }
 
 void CMHDPolarityCheckerDlg::DoDataExchange(CDataExchange* pDX)
@@ -139,6 +140,7 @@ void CMHDPolarityCheckerDlg::DoDataExchange(CDataExchange* pDX)
 	DDX_Text(pDX, IDC_EDIT_B3, dB3);
 	DDX_Text(pDX, IDC_EDIT_VP, vp);
 	DDX_Text(pDX, IDC_EDIT_VG, vg);
+	DDX_Control(pDX, IDC_PIC_POLARITY, zoneToPlot);
 }
 
 BEGIN_MESSAGE_MAP(CMHDPolarityCheckerDlg, CDialogEx)
@@ -236,9 +238,112 @@ void CMHDPolarityCheckerDlg::OnPaint()
 		dc.DrawIcon(x, y, m_hIcon);
 	}
 	else
-	{
+	{ 
+		CWnd * arena; 
+		CPen penBlack(PS_SOLID, 2, RGB(0, 0, 0)); 
+		CPen penBlue(PS_SOLID, 2, RGB(0, 0, 255)); 
+		CPen penRed(PS_SOLID, 2, RGB(255, 0, 0));
+		CPen penOrange(PS_SOLID, 2, RGB(127, 64, 127));
+		CPen penGreen(PS_SOLID, 2, RGB(0, 127, 0)); 
+		CPen penCyan(PS_SOLID, 2, RGB(0, 127, 127));
+		CPen penWhite(PS_SOLID, 2, RGB(255, 255, 255));
+		
+		arena = GetDlgItem(IDC_PIC_POLARITY);
+		CPaintDC * arenaDC; 
+		CPaintDC etwasDC(arena);
+		arenaDC = &etwasDC; 
+		int xLeft, yLeft, xRight, yRight, width, height; 
+		int radius, centerX, centerY; 
+
+		RECT theRect, theCirc;
+
+		arena->GetClientRect(&theRect); 
+		// Blyad window$! 
+		yRight = theRect.bottom; 
+		yLeft = theRect.top; 
+		xLeft = theRect.left;
+		xRight = theRect.right; 
+		width = xRight - xLeft; 
+		height = yRight - yLeft;
+		centerX = ((xRight + xLeft) >> 1); 
+		centerY = ((yRight + yLeft) >> 1);
+		radius = min(width, height) * 19 / 40; 
+		theCirc.left = centerX - radius; 
+		theCirc.right = centerX + radius; 
+		theCirc.bottom = centerY + radius; 
+		theCirc.top = centerY - radius; 
+
+		arenaDC->SelectObject(&penWhite); 
+		arenaDC->Rectangle(&theRect); 
+		arenaDC->SelectObject(&penBlack);
+		arenaDC->Ellipse(&theCirc); 
+		drawArrow(centerX, centerY, radius, 0, (void*)&penBlack, (void*)arenaDC);
+		drawArrow(centerX, centerY, radius, theta, (void*)&penGreen, (void*)arenaDC);
+		float dvfpa, dvfpe, dBfpa, dBfpe, maxD; 
+		dvfpa = dvPara; 
+		dvfpe = dvPerp; 
+		dBfpa = dBPara; 
+		dBfpe = dBPerp; 
+		maxD = max(max(max(dvfpa, dvfpe), dBfpa), dBfpe); 
+		dvfpa /= maxD; dvfpe /= maxD; 
+		dBfpa /= maxD; dBfpe /= maxD; 
+		int thetaVF, thetaBF;
+		float rad; 
+		int rVf, rBf;
+		rad = 180 / (355.0 / 113);
+		thetaVF = atan2(dvfpe, dvfpa) * rad; 
+		thetaBF = atan2(dBfpe, dBfpa) * rad; 
+		rVf = sqrt(dvfpe * dvfpe + dvfpa * dvfpa) * radius; 
+		rBf = sqrt(dBfpe * dBfpe + dBfpa * dBfpa) * radius; 
+		if (typ == fast)
+		{
+			drawArrow(centerX, centerY, rVf, thetaVF, (void*)&penBlue, (void*)arenaDC);
+			drawArrow(centerX, centerY, rBf, thetaBF, (void*)&penCyan, (void*)arenaDC);
+		}
+		else if (typ == slow)
+		{
+			drawArrow(centerX, centerY, rVf, thetaVF, (void*)&penRed, (void*)arenaDC);
+			drawArrow(centerX, centerY, rBf, thetaBF, (void*)&penOrange, (void*)arenaDC);
+		}
+		arenaDC->CloseFigure(); 
+		ReleaseDC(arenaDC); 
 		CDialogEx::OnPaint();
 	}
+}
+
+void CMHDPolarityCheckerDlg::drawArrow(int centerX, int centerY, int len, int rechtung, void* penIn, void* woIn)
+{
+	int pinX, pinY; 
+	int leftTailX, leftTailY, rightTailX, rightTailY, finX, finY; 
+	float thetaTailLeft, thetaTailRight, thetaLine;
+	int lenTail; 
+	float deg = 355.0 / 113 / 180; 
+	int arrowSize; 
+	CPen * pen; 
+	CPaintDC * wo; 
+
+	pen = (CPen *) penIn; 
+	wo = (CPaintDC *) woIn; 
+
+	lenTail = len * 1 / 4; 
+	arrowSize = 18; 
+	wo->SelectObject(pen);
+	thetaLine = (rechtung + 90) * deg;
+	thetaTailLeft = (rechtung - 90 - arrowSize) * deg; 
+	thetaTailRight = (rechtung - 90 + arrowSize) * deg; 
+
+	wo->MoveTo(centerX, centerY); 
+	finX = centerX + cos(thetaLine) * len; 
+	finY = centerY - sin(thetaLine) * len; // Window$ Ar$chloch! 
+	wo->LineTo(finX, finY); 
+	wo->MoveTo(finX, finY); 
+	leftTailX = finX + cos(thetaTailLeft) * lenTail; 
+	leftTailY = finY - sin(thetaTailLeft) * lenTail;
+	wo->LineTo(leftTailX, leftTailY); 
+	wo->MoveTo(finX, finY); 
+	rightTailX = finX + cos(thetaTailRight) * lenTail; 
+	rightTailY = finY - sin(thetaTailRight) * lenTail;
+	wo->LineTo(rightTailX, rightTailY);
 }
 
 // The system calls this function to obtain the cursor to display while the user drags
@@ -246,6 +351,14 @@ void CMHDPolarityCheckerDlg::OnPaint()
 HCURSOR CMHDPolarityCheckerDlg::OnQueryDragIcon()
 {
 	return static_cast<HCURSOR>(m_hIcon);
+}
+
+void CMHDPolarityCheckerDlg::plotGraph()
+{
+	Invalidate(TRUE);
+	OnPaint();
+	Invalidate(FALSE);
+	UpdateWindow();
 }
 
 void CMHDPolarityCheckerDlg::updateAll(changed what)
@@ -299,13 +412,14 @@ void CMHDPolarityCheckerDlg::updateAll(changed what)
 	dBPerp = rate * factorTable[6];
 	dB3 = rate * factorTable[7];
 	vp = vp_Gross;
+	// OnPaint();
+	plotGraph(); 
 	UpdateData(0);
 }
 
 
 void CMHDPolarityCheckerDlg::OnBnClickedRadioFast()
 {
-	// TODO: Add your control notification handler code here
 	typ = fast; 
 	updateAll(idType);
 }
@@ -313,7 +427,6 @@ void CMHDPolarityCheckerDlg::OnBnClickedRadioFast()
 
 void CMHDPolarityCheckerDlg::OnBnClickedRadioSlow()
 {
-	// TODO: Add your control notification handler code here
 	typ = slow; 
 	updateAll(idType);
 }
@@ -321,7 +434,6 @@ void CMHDPolarityCheckerDlg::OnBnClickedRadioSlow()
 
 void CMHDPolarityCheckerDlg::OnBnClickedRadioAlfven()
 {
-	// TODO: Add your control notification handler code here
 	typ = aw; 
 	updateAll(idType);
 }
@@ -329,143 +441,71 @@ void CMHDPolarityCheckerDlg::OnBnClickedRadioAlfven()
 
 void CMHDPolarityCheckerDlg::OnEnChangeEditRho()
 {
-	// TODO:  If this is a RICHEDIT control, the control will not
-	// send this notification unless you override the CDialogEx::OnInitDialog()
-	// function and call CRichEditCtrl().SetEventMask()
-	// with the ENM_CHANGE flag ORed into the mask.
-
-	// TODO:  Add your control notification handler code here
 	updateAll(idRho);
 }
 
 
 void CMHDPolarityCheckerDlg::OnEnChangeEditCs()
 {
-	// TODO:  If this is a RICHEDIT control, the control will not
-	// send this notification unless you override the CDialogEx::OnInitDialog()
-	// function and call CRichEditCtrl().SetEventMask()
-	// with the ENM_CHANGE flag ORed into the mask.
-
-	// TODO:  Add your control notification handler code here
 	updateAll(idCs);
 }
 
 
 void CMHDPolarityCheckerDlg::OnEnChangeEditVa()
 {
-	// TODO:  If this is a RICHEDIT control, the control will not
-	// send this notification unless you override the CDialogEx::OnInitDialog()
-	// function and call CRichEditCtrl().SetEventMask()
-	// with the ENM_CHANGE flag ORed into the mask.
-
-	// TODO:  Add your control notification handler code here
 	updateAll(idVa);
 }
 
 
 void CMHDPolarityCheckerDlg::OnEnChangeEditTheta()
 {
-	// TODO:  If this is a RICHEDIT control, the control will not
-	// send this notification unless you override the CDialogEx::OnInitDialog()
-	// function and call CRichEditCtrl().SetEventMask()
-	// with the ENM_CHANGE flag ORed into the mask.
-
-	// TODO:  Add your control notification handler code here
 	updateAll(idTheta);
 }
 
 
 void CMHDPolarityCheckerDlg::OnEnChangeEditRhozero()
 {
-	// TODO:  If this is a RICHEDIT control, the control will not
-	// send this notification unless you override the CDialogEx::OnInitDialog()
-	// function and call CRichEditCtrl().SetEventMask()
-	// with the ENM_CHANGE flag ORed into the mask.
-
-	// TODO:  Add your control notification handler code here
 	updateAll(idRhoZero);
 }
 
 
 void CMHDPolarityCheckerDlg::OnEnChangeEditVpara()
 {
-	// TODO:  If this is a RICHEDIT control, the control will not
-	// send this notification unless you override the CDialogEx::OnInitDialog()
-	// function and call CRichEditCtrl().SetEventMask()
-	// with the ENM_CHANGE flag ORed into the mask.
-
-	// TODO:  Add your control notification handler code here
 	updateAll(idVPara);
 }
 
 
 void CMHDPolarityCheckerDlg::OnEnChangeEditVperp()
 {
-	// TODO:  If this is a RICHEDIT control, the control will not
-	// send this notification unless you override the CDialogEx::OnInitDialog()
-	// function and call CRichEditCtrl().SetEventMask()
-	// with the ENM_CHANGE flag ORed into the mask.
-
-	// TODO:  Add your control notification handler code here
 	updateAll(idVPerp);
 }
 
 
 void CMHDPolarityCheckerDlg::OnEnChangeEditV3()
 {
-	// TODO:  If this is a RICHEDIT control, the control will not
-	// send this notification unless you override the CDialogEx::OnInitDialog()
-	// function and call CRichEditCtrl().SetEventMask()
-	// with the ENM_CHANGE flag ORed into the mask.
-
-	// TODO:  Add your control notification handler code here
 	updateAll(idV3);
 }
 
 
 void CMHDPolarityCheckerDlg::OnEnChangeEditP()
 {
-	// TODO:  If this is a RICHEDIT control, the control will not
-	// send this notification unless you override the CDialogEx::OnInitDialog()
-	// function and call CRichEditCtrl().SetEventMask()
-	// with the ENM_CHANGE flag ORed into the mask.
-
-	// TODO:  Add your control notification handler code here
 	updateAll(idP);
 }
 
 
 void CMHDPolarityCheckerDlg::OnEnChangeEditBpara()
 {
-	// TODO:  If this is a RICHEDIT control, the control will not
-	// send this notification unless you override the CDialogEx::OnInitDialog()
-	// function and call CRichEditCtrl().SetEventMask()
-	// with the ENM_CHANGE flag ORed into the mask.
-
-	// TODO:  Add your control notification handler code here
 	updateAll(idBPara);
 }
 
 
 void CMHDPolarityCheckerDlg::OnEnChangeEditBperp()
 {
-	// TODO:  If this is a RICHEDIT control, the control will not
-	// send this notification unless you override the CDialogEx::OnInitDialog()
-	// function and call CRichEditCtrl().SetEventMask()
-	// with the ENM_CHANGE flag ORed into the mask.
-
-	// TODO:  Add your control notification handler code here
 	updateAll(idBPerp);
 }
 
 
 void CMHDPolarityCheckerDlg::OnEnChangeEditB3()
 {
-	// TODO:  If this is a RICHEDIT control, the control will not
-	// send this notification unless you override the CDialogEx::OnInitDialog()
-	// function and call CRichEditCtrl().SetEventMask()
-	// with the ENM_CHANGE flag ORed into the mask.
-
-	// TODO:  Add your control notification handler code here
 	updateAll(idB3);
 }

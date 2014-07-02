@@ -3,6 +3,7 @@
 //
 
 #pragma once
+#include "afxwin.h"
 
 enum changed {idType, idCs, idVa, idTheta, idRhoZero, idRho, idP, idVPara, idVPerp, idV3, idBPara, idBPerp, idB3}; 
 // CMHDPolarityCheckerDlg dialog
@@ -46,6 +47,7 @@ public:
 	CString vg;
 	afx_msg void OnBnClickedRadioFast();
 	afx_msg void updateAll(changed what);
+	afx_msg void plotGraph();
 	afx_msg void OnBnClickedRadioSlow();
 	afx_msg void OnBnClickedRadioAlfven();
 	afx_msg void OnEnChangeEditRho();
@@ -60,4 +62,8 @@ public:
 	afx_msg void OnEnChangeEditBpara();
 	afx_msg void OnEnChangeEditBperp();
 	afx_msg void OnEnChangeEditB3();
+																			// CPen *  // CPaintDC *   
+	afx_msg void drawArrow(int centerX, int centerY, int len, int rechtung, void* pen, void * wo);
+	CStatic zoneToPlot;	
 };
+
