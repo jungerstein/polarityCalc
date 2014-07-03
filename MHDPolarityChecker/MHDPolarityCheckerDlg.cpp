@@ -197,6 +197,7 @@ BOOL CMHDPolarityCheckerDlg::OnInitDialog()
 	SetIcon(m_hIcon, FALSE);		// Set small icon
 
 	// TODO: Add extra initialization here
+	((CButton*) GetDlgItem(IDC_RADIO_ALFVEN)) -> SetCheck(TRUE); 
 
 	return TRUE;  // return TRUE  unless you set the focus to a control
 }
@@ -284,17 +285,20 @@ void CMHDPolarityCheckerDlg::OnPaint()
 		dvfpe = dvPerp; 
 		dBfpa = dBPara; 
 		dBfpe = dBPerp; 
-		maxD = max(max(max(dvfpa, dvfpe), dBfpa), dBfpe); 
-		dvfpa /= maxD; dvfpe /= maxD; 
-		dBfpa /= maxD; dBfpe /= maxD; 
 		int thetaVF, thetaBF;
 		float rad; 
 		int rVf, rBf;
+		int magV, magB; 
 		rad = 180 / (355.0 / 113);
 		thetaVF = atan2(dvfpe, dvfpa) * rad; 
 		thetaBF = atan2(dBfpe, dBfpa) * rad; 
-		rVf = sqrt(dvfpe * dvfpe + dvfpa * dvfpa) * radius; 
-		rBf = sqrt(dBfpe * dBfpe + dBfpa * dBfpa) * radius; 
+		magV = sqrt(dvfpe * dvfpe + dvfpa * dvfpa);
+		magB = sqrt(dBfpe * dBfpe + dBfpa * dBfpa);
+		maxD = max(magV, magB); 
+		magV /= maxD; 
+		magB /= maxD; 
+		rVf = magV * radius; 
+		rBf = magB * radius; 
 		if (typ == fast)
 		{
 			drawArrow(centerX, centerY, rVf, thetaVF, (void*)&penBlue, (void*)arenaDC);
