@@ -55,7 +55,7 @@ void recompute(double cs, double va, double rhoZero, double thetaDeg)
 {
 	double th, vp, delta; 
 	th = thetaDeg / 180 * 3.141592653589793l; 
-	delta = sqrt((cs*cs + va*va)*(cs*cs + va*va) - 4 * cs * cs * va * va * cos(th));
+	delta = sqrt((cs*cs + va*va)*(cs*cs + va*va) - 4 * cs * cs * va * va * cos(th) * cos(th));
 
 	switch(typ)
 	{
