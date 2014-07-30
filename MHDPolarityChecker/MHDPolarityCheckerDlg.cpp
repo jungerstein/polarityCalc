@@ -244,7 +244,7 @@ void CMHDPolarityCheckerDlg::OnPaint()
 		CPen penBlack(PS_SOLID, 2, RGB(0, 0, 0)); 
 		CPen penBlue(PS_SOLID, 2, RGB(0, 0, 255)); 
 		CPen penRed(PS_SOLID, 2, RGB(255, 0, 0));
-		CPen penOrange(PS_SOLID, 2, RGB(127, 64, 127));
+		CPen penOrange(PS_SOLID, 2, RGB(255, 103, 0));
 		CPen penGreen(PS_SOLID, 2, RGB(0, 127, 0)); 
 		CPen penCyan(PS_SOLID, 2, RGB(0, 127, 127));
 		CPen penWhite(PS_SOLID, 2, RGB(255, 255, 255));
